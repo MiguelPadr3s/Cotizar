@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Calculadora de Impresión 3D</title>
+    <style>
+      :root {
+        --bg: #0f1724;
+        --card: #0b1220;
+        --accent: #06b6d4;
+        --muted: #94a3b8;
+        --glass: rgba(255, 255, 255, 0.03);
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Helvetica, Arial;
+        background: linear-gradient(180deg, #071024 0%, #071a2a 100%);
+        color: #e6eef8;
+        padding: 24px;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 12px;
+      }
+      .card {
+        background: var(--card);
+        padding: 18px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(2, 6, 23, 0.6);
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: var(--glass);
+        color: inherit;
+        outline: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      button {
+        background: var(--accent);
+        color: #022;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .result {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        padding: 12px;
+        border-radius: 10px;
+        margin-top: 12px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .small {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      footer {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 12px;
+      }
+      @media (max-width: 720px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Calculadora de precio — Impresión 3D</h1>
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label>Gramos (g)</label>
+            <input id="grams" type="number" min="0" step="0.01" value="100" />
+          </div>
+          <div>
+            <label>Horas (h) — decimales permitidos</label>
+            <input id="hours" type="number" min="0" step="0.01" value="5" />
+          </div>
+          <div>
+            <label>Minutos (opcional)</label>
+            <input
+              id="minutes"
+              type="number"
+              min="0"
+              max="59"
+              step="1"
+              value="0"
+            />
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px">
+          <div>
+            <label>Precio filamento por kilo (MXN)</label>
+            <input
+              id="price_per_kg"
+              type="number"
+              min="0"
+              step="1"
+              value="400"
+            />
+          </div>
+          <div>
+            <label>Tarifa eléctrica (MXN/kWh)</label>
+            <input
+              id="price_kwh"
+              type="number"
+              min="0"
+              step="0.01"
+              value="2.5"
+            />
+          </div>
+        </div>
+
+        <div class="grid" style="margin-top: 12px">
+          <div>
+            <label>Consumo estimado (kWh/h)</label>
+            <input
+              id="kwh_per_h"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0.15"
+            />
+          </div>
+          <div>
+            <label>Desgaste / mantenimiento ($/h)</label>
+            <input
+              id="wear_per_h"
+              type="number"
+              min="0"
+              step="0.01"
+              value="7"
+            />
+          </div>
+          <div>
+            <label>Formato de redondeo</label>
+            <select id="rounding">
+              <option value="1">Sin redondeo</option>
+              <option value="5">Redondear al $5 más cercano</option>
+              <option value="10">Redondear al $10 más cercano</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="calc">Calcular</button>
+          <button id="copy">Copiar cotización</button>
+          <button id="reset" style="background: #334155; color: #fff">
+            Limpiar
+          </button>
+        </div>
+
+        <div
+          id="output"
+          class="result"
+          aria-live="polite"
+          style="display: none"
+        >
+          <div class="small">Desglose (sin ganancia)</div>
+          <div class="row">
+            <div>Filamento</div>
+            <div id="out_fil" class="small">$0.00</div>
+          </div>
+          <div class="row">
+            <div>Electricidad</div>
+            <div id="out_elec" class="small">$0.00</div>
+          </div>
+          <div class="row">
+            <div>Desgaste / mantenimiento</div>
+            <div id="out_wear" class="small">$0.00</div>
+          </div>
+          <div class="row">
+            <strong>Total base</strong><strong id="out_total">$0.00</strong>
+          </div>
+
+          <div style="margin-top: 10px" class="small">Precios sugeridos</div>
+          <div class="row">
+            <div>+100% (x2)</div>
+            <div id="out_100">$0.00</div>
+          </div>
+          <div class="row">
+            <div>+150% (x2.5)</div>
+            <div id="out_150">$0.00</div>
+          </div>
+          <div class="row">
+            <div>+200% (x3)</div>
+            <div id="out_200">$0.00</div>
+          </div>
+
+          <div style="margin-top: 10px" class="small">Detalle promedio</div>
+          <div class="row">
+            <div>Costo por gramo</div>
+            <div id="out_per_g">$0.00/g</div>
+          </div>
+          <div class="row">
+            <div>Costo por hora</div>
+            <div id="out_per_h">$0.00/h</div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        Plantilla generada — ajusta tarifas si cambian tus costos.
+      </footer>
+    </div>
+
+    <script>
+      function toMoney(v) {
+        return "$" + Number(v).toFixed(2);
+      }
+      function roundTo(x, step) {
+        if (step == 1) return Math.round(x * 100) / 100;
+        return Math.round(x / step) * step;
+      }
+
+      document.getElementById("calc").addEventListener("click", () => {
+        const g = parseFloat(document.getElementById("grams").value) || 0;
+        const h = parseFloat(document.getElementById("hours").value) || 0;
+        const m = parseFloat(document.getElementById("minutes").value) || 0;
+        const hours = h + m / 60;
+
+        const price_per_kg =
+          parseFloat(document.getElementById("price_per_kg").value) || 400;
+        const price_per_g = price_per_kg / 1000;
+        const kwh_per_h =
+          parseFloat(document.getElementById("kwh_per_h").value) || 0.15;
+        const price_kwh =
+          parseFloat(document.getElementById("price_kwh").value) || 2.5;
+        const wear_per_h =
+          parseFloat(document.getElementById("wear_per_h").value) || 7;
+        const rounding = parseFloat(document.getElementById("rounding").value);
+
+        const fil = g * price_per_g;
+        const elec = hours * kwh_per_h * price_kwh;
+        const wear = hours * wear_per_h;
+        const total = fil + elec + wear;
+
+        const p100 = total * 2;
+        const p150 = total * 2.5;
+        const p200 = total * 3;
+
+        const displayTotal = roundTo(total, rounding);
+
+        document.getElementById("out_fil").textContent = toMoney(fil);
+        document.getElementById("out_elec").textContent = toMoney(elec);
+        document.getElementById("out_wear").textContent = toMoney(wear);
+        document.getElementById("out_total").textContent =
+          toMoney(displayTotal);
+
+        document.getElementById("out_100").textContent = toMoney(
+          roundTo(p100, rounding)
+        );
+        document.getElementById("out_150").textContent = toMoney(
+          roundTo(p150, rounding)
+        );
+        document.getElementById("out_200").textContent = toMoney(
+          roundTo(p200, rounding)
+        );
+
+        document.getElementById("out_per_g").textContent =
+          toMoney((total / (g || 1)).toFixed(4)) + "/g";
+        document.getElementById("out_per_h").textContent =
+          toMoney((total / (hours || 1)).toFixed(4)) + "/h";
+
+        document.getElementById("output").style.display = "block";
+      });
+
+      document.getElementById("copy").addEventListener("click", () => {
+        const out = document.getElementById("output");
+        if (out.style.display === "none") {
+          alert("Primero calcula.");
+          return;
+        }
+        const text = Array.from(out.querySelectorAll(".row"))
+          .map((r) => r.textContent.trim())
+          .join("\n");
+        navigator.clipboard
+          .writeText(text)
+          .then(() => alert("Cotización copiada al portapapeles"));
+      });
+
+      document
+        .getElementById("reset")
+        .addEventListener("click", () => {
+          document.getElementById("grams").value = "100";
+          document.getElementById("hours").value = "5";
+          document.getElementById("minutes").value = "0";
+          document.getElementById("output").style.display = "none";
+        })
+
+        [
+          // permite Enter para calcular
+          ("grams", "hours", "minutes")
+        ].forEach((id) => {
+          document.getElementById(id).addEventListener("keydown", (e) => {
+            if (e.key === "Enter") document.getElementById("calc").click();
+          });
+        });
+    </script>
+  </body>
+</html>
